@@ -8,15 +8,24 @@ pub struct Two {}
 impl DailyChallenge for Two {
     fn run(&self) {
         println!("Day Two");
-        let results: Vec<u32> = fs::read_to_string("contents/day_two.txt")
+        let results: Vec<Game> = fs::read_to_string("contents/day_two.txt")
             .expect("Should have been able to read file")
             .lines()
             // .take(10)
             .flat_map(|line| Game::from(line))
+            .collect();
+        let part_one_results: Vec<u32> = results.
+            iter()
             .map(|game| game.score() as u32)
             .collect();
-        let part_one: u32 = results.iter().sum();
+        let part_one: u32 = part_one_results.iter().sum();
         println!("The result of part one is {:?}", part_one);
+        let part_two_results: Vec<u32> = results
+            .iter()
+            .map(|game| game.alternate_score() as u32)
+            .collect();
+        let part_two: u32 = part_two_results.iter().sum();
+        println!("The result of part two is {:?}", part_two);
     }
 }
 
@@ -98,6 +107,32 @@ impl Game {
 
     fn score(&self) -> u8 {
         self.recommended.score() + self.result().score()
+    }
+
+    fn alternate_recommendation(&self) -> MatchResult {
+        match self.recommended {
+            Rock => MatchResult::Lose,
+            Paper => MatchResult::Draw,
+            Scissors => MatchResult::Win,
+        }
+    }
+
+    fn alternate_result(&self) -> Choice {
+        match (self.opponent, self.alternate_recommendation()) {
+            (Rock, MatchResult::Win) => Paper,
+            (Rock, MatchResult::Lose) => Scissors,
+            (Rock, MatchResult::Draw) => Rock,
+            (Paper, MatchResult::Win) => Scissors,
+            (Paper, MatchResult::Lose) => Rock,
+            (Paper, MatchResult::Draw) => Paper,
+            (Scissors, MatchResult::Win) => Rock,
+            (Scissors, MatchResult::Lose) => Paper,
+            (Scissors, MatchResult::Draw) => Scissors,
+        }
+    }
+
+    fn alternate_score(&self) -> u8 {
+        self.alternate_result().score() + self.alternate_recommendation().score()
     }
 }
 
@@ -259,5 +294,131 @@ mod tests {
     fn c_z_game_score() {
         let game = Game::from("C Z").unwrap();
         assert_eq!(game.score(), 6);
+    }
+
+    #[test]
+    fn alternate_recommendation_win() {
+        let game = Game::from("A Z").unwrap();
+        assert_eq!(MatchResult::Win, game.alternate_recommendation());
+    }
+
+    #[test]
+    fn alternate_recommendation_lose() {
+        let game = Game::from("A X").unwrap();
+        assert_eq!(MatchResult::Lose, game.alternate_recommendation());
+    }
+
+    #[test]
+    fn alternate_recommendation_draw() {
+        let game = Game::from("A Y").unwrap();
+        assert_eq!(MatchResult::Draw, game.alternate_recommendation());
+    }
+
+    #[test]
+    fn alternate_rock_win() {
+        let game = Game::from("A Z").unwrap();
+        assert_eq!(game.alternate_result(), Paper);
+    }
+
+    #[test]
+    fn alternate_rock_lose() {
+        let game = Game::from("A X").unwrap();
+        assert_eq!(game.alternate_result(), Scissors);
+    }
+
+    #[test]
+    fn alternate_rock_draw() {
+        let game = Game::from("A Y").unwrap();
+        assert_eq!(game.alternate_result(), Rock);
+    }
+
+    #[test]
+    fn alternate_paper_win() {
+        let game = Game::from("B Z").unwrap();
+        assert_eq!(game.alternate_result(), Scissors);
+    }
+
+    #[test]
+    fn alternate_paper_lose() {
+        let game = Game::from("B X").unwrap();
+        assert_eq!(game.alternate_result(), Rock);
+    }
+
+    #[test]
+    fn alternate_paper_draw() {
+        let game = Game::from("B Y").unwrap();
+        assert_eq!(game.alternate_result(), Paper);
+    }
+
+    #[test]
+    fn alternate_scissors_win() {
+        let game = Game::from("C Z").unwrap();
+        assert_eq!(game.alternate_result(), Rock);
+    }
+
+    #[test]
+    fn alternate_scissors_lose() {
+        let game = Game::from("C X").unwrap();
+        assert_eq!(game.alternate_result(), Paper);
+    }
+
+    #[test]
+    fn alternate_scissors_draw() {
+        let game = Game::from("C Y").unwrap();
+        assert_eq!(game.alternate_result(), Scissors);
+    }
+
+    #[test]
+    fn a_x_alternate_score() {
+        let game = Game::from("A X").unwrap();
+        assert_eq!(game.alternate_score(), 3);
+    }
+
+    #[test]
+    fn a_y_alternate_score() {
+        let game = Game::from("A Y").unwrap();
+        assert_eq!(game.alternate_score(), 4);
+    }
+
+    #[test]
+    fn a_z_alternate_score() {
+        let game = Game::from("A Z").unwrap();
+        assert_eq!(game.alternate_score(), 8);
+    }
+
+    #[test]
+    fn b_x_alternate_score() {
+        let game = Game::from("B X").unwrap();
+        assert_eq!(game.alternate_score(), 1);
+    }
+
+    #[test]
+    fn b_y_alternate_score() {
+        let game = Game::from("B Y").unwrap();
+        assert_eq!(game.alternate_score(), 5);
+    }
+
+    #[test]
+    fn b_z_alternate_score() {
+        let game = Game::from("B Z").unwrap();
+        assert_eq!(game.alternate_score(), 9);
+    }
+
+    #[test]
+    fn c_x_alternate_score() {
+        let game = Game::from("C X").unwrap();
+        assert_eq!(game.alternate_score(), 2);
+    }
+
+    #[test]
+    fn c_y_alternate_score() {
+        let game = Game::from("C Y").unwrap();
+        assert_eq!(game.alternate_score(), 6);
+    }
+
+    #[test]
+    fn c_z_alternate_score() {
+        let game = Game::from("C Z").unwrap();
+        assert_eq!(game.alternate_score(), 7);
     }
 }

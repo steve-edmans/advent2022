@@ -11,7 +11,6 @@ fn main() {
         Box::new(Two {})
     ];
     for day in days {
-        println!("We have a day");
         day.run();
     }
 }
