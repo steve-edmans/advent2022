@@ -1,19 +1,24 @@
 use std::fs;
+use advent2022::DailyChallenge;
 
 struct Accumulator {
     total_calories_per_elf: Vec<u32>,
     current_total: u32
 }
 
-pub fn run() {
-    println!("Day One");
-    let values = read_file();
-    let mut per_elf_calories = extract_totals(&values);
-    per_elf_calories.sort();
-    per_elf_calories.reverse();
-    println!("The result of part one is {:?}", per_elf_calories[0]);
-    let top_three:u32 = (&per_elf_calories[0..3]).iter().sum();
-    println!("The result of part two is {:#?}", top_three);
+pub struct One {}
+
+impl DailyChallenge for One {
+    fn run(&self) {
+        println!("Day One");
+        let values = read_file();
+        let mut per_elf_calories = extract_totals(&values);
+        per_elf_calories.sort();
+        per_elf_calories.reverse();
+        println!("The result of part one is {:?}", per_elf_calories[0]);
+        let top_three:u32 = (&per_elf_calories[0..3]).iter().sum();
+        println!("The result of part two is {:#?}", top_three);
+    }
 }
 
 fn extract_totals(values: &Vec<Option<u32>>) -> Vec<u32> {
