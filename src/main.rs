@@ -5,6 +5,7 @@ use days::one::One;
 use days::two::Two;
 use days::three::Three;
 use days::four::Four;
+use days::five::Five;
 
 fn main() {
     println!("Advent of code 2022");
@@ -13,6 +14,7 @@ fn main() {
         Box::new(Two {}),
         Box::new(Three {}),
         Box::new(Four {}),
+        Box::new(Five {}),
     ];
     for day in days {
         day.run();
