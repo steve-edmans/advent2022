@@ -18,6 +18,12 @@ impl DailyChallenge for Four {
             .filter(|&assignment| assignment.fully_contains())
             .count();
         println!("The result of part one is {:?}", part_one);
+
+        let part_two = section_assignments
+            .iter()
+            .filter(|&assignment| assignment.overlaps())
+            .count();
+        println!("The result of part two is {:?}", part_two);
     }
 }
 
@@ -62,6 +68,16 @@ impl Assignments {
         }
         inner_contain(&self.first, &self.second) || inner_contain(&self.second, &self.first)
     }
+
+    fn overlaps(&self) -> bool {
+        fn inner_overlap(first: &Range<u32>, second: &Range<u32>) -> bool {
+            if first.start <= second.start && second.start <= first.end {
+                return true;
+            }
+            false
+        }
+        inner_overlap(&self.first, &self.second) || inner_overlap(&self.second, &self.first)
+    }
 }
 
 #[cfg(test)]
@@ -88,20 +104,50 @@ mod tests {
     }
 
     #[test]
-    fn overlap_start() {
+    fn fully_contain_overlap_start() {
         let actual = Assignments::from("3-7,2-4").unwrap();
         assert_eq!(actual.fully_contains(), false);
     }
 
     #[test]
-    fn overlap_end() {
+    fn fully_contain_overlap_end() {
         let actual = Assignments::from("3-7,5-8").unwrap();
         assert_eq!(actual.fully_contains(), false);
     }
 
     #[test]
-    fn disjoint() {
+    fn fully_contain_disjoint() {
         let actual = Assignments::from("3-4,5-8").unwrap();
         assert_eq!(actual.fully_contains(), false);
+    }
+
+    #[test]
+    fn first_fully_overlaps_second() {
+        let actual = Assignments::from("2-8,3-7").unwrap();
+        assert_eq!(actual.overlaps(), true);
+    }
+
+    #[test]
+    fn second_fully_overlaps_first() {
+        let actual = Assignments::from("3-7,2-8").unwrap();
+        assert_eq!(actual.overlaps(), true);
+    }
+
+    #[test]
+    fn overlap_start() {
+        let actual = Assignments::from("3-7,2-4").unwrap();
+        assert_eq!(actual.overlaps(), true);
+    }
+
+    #[test]
+    fn overlap_end() {
+        let actual = Assignments::from("3-7,5-8").unwrap();
+        assert_eq!(actual.overlaps(), true);
+    }
+
+    #[test]
+    fn overlap_disjoint() {
+        let actual = Assignments::from("52-52,3-51").unwrap();
+        assert_eq!(actual.overlaps(), false);
     }
 }
