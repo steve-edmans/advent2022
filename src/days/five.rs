@@ -18,17 +18,25 @@ impl DailyChallenge for Five {
             .clone()
             .take_while(|&line| line.len() > 0)
             .collect();
-        let mut stacks = Five::extract_stack_of_crates(possible_stacks);
+        let stacks = Five::extract_stack_of_crates(possible_stacks);
         let possible_rows: Vec<MovementOrder> = lines
             .clone()
             .skip_while(|&line| line.len() > 0)
             .skip(1)
             .map(|order_text| MovementOrder::from(order_text).unwrap())
             .collect();
-        for row in possible_rows {
-            Five::process(&mut stacks, row);
+        let mut part_one_stacks = stacks.clone();
+        for row in &possible_rows {
+            Five::process(&mut part_one_stacks, row);
         }
-        let part_one = Five::find_head(&stacks);
+        let part_one = Five::find_head(&part_one_stacks);
+        println!("The result of part one is {:?}", part_one);
+
+        let mut part_two_stacks = stacks.clone();
+        for row in &possible_rows {
+            Five::process_9001(&mut part_two_stacks, row);
+        }
+        let part_one = Five::find_head(&part_two_stacks);
         println!("The result of part one is {:?}", part_one);
     }
 }
@@ -80,7 +88,6 @@ impl Five {
                             FoundWithCrate { crate_code } => {
                                 stack_of_crates
                                     .entry(column)
-                                    // .and_modify(|stack| stack.push(*crate_code))
                                     .and_modify(|stack| stack.insert(0,*crate_code))
                                     .or_insert(Box::new(vec![*crate_code]));
                             },
@@ -94,7 +101,7 @@ impl Five {
         return stack_of_crates;
     }
 
-    fn process(stacks: &mut HashMap<u8, Box<Vec<char>>>, order: MovementOrder) {
+    fn process(stacks: &mut HashMap<u8, Box<Vec<char>>>, &order: &MovementOrder) {
         match order {
             MovementOrder { num_crates: num, from_stack: from, to_stack: to} => {
                 for _ in 0..num {
@@ -105,6 +112,26 @@ impl Five {
                     *stacks.get_mut(&from).unwrap() = Box::new(stack_from);
                     *stacks.get_mut(&to).unwrap() = Box::new(stack_to);
                 }
+            }
+        }
+    }
+
+    fn process_9001(stacks: &mut HashMap<u8, Box<Vec<char>>>, &order: &MovementOrder) {
+        match order {
+            MovementOrder { num_crates: num, from_stack: from, to_stack: to } => {
+                let mut crates_to_move: Vec<char> = Vec::new();
+                let mut stack_from = stacks[&from].to_vec();
+                let mut stack_to = stacks[&to].to_vec();
+
+                for _ in 0..num {
+                    let crate_code = stack_from.pop().unwrap();
+                    crates_to_move.insert(0, crate_code);
+                }
+
+                stack_to.append(&mut crates_to_move);
+
+                *stacks.get_mut(&from).unwrap() = Box::new(stack_from);
+                *stacks.get_mut(&to).unwrap() = Box::new(stack_to);
             }
         }
     }
@@ -131,7 +158,7 @@ enum ColumnRead {
     RowFinished
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 struct MovementOrder {
     num_crates: u8,
     from_stack: u8,
@@ -342,15 +369,43 @@ mod tests {
         let forth_order = MovementOrder { num_crates: 1, from_stack: 1, to_stack: 2};
 
         println!("Before we have {:?}", stacks);
-        Five::process(&mut stacks, first_order);
+        Five::process(&mut stacks, &first_order);
         println!("After first step we have {:?}", stacks);
-        Five::process(&mut stacks, second_order);
+        Five::process(&mut stacks, &second_order);
         println!("After second step we have {:?}", stacks);
-        Five::process(&mut stacks, third_order);
+        Five::process(&mut stacks, &third_order);
         println!("After third step we have {:?}", stacks);
-        Five::process(&mut stacks, forth_order);
+        Five::process(&mut stacks, &forth_order);
         println!("After forth step we have {:?}", stacks);
 
         assert_eq!(Five::find_head(&stacks), "CMZ");
+    }
+
+    #[test]
+    fn test_crate_mover_9001() {
+        let data = vec![
+            "    [D]     ",
+            "[N] [C]     ",
+            "[Z] [M] [P] ",
+            " 1   2   3  "
+        ];
+        let mut stacks = Five::extract_stack_of_crates(data);
+
+        let first_order = MovementOrder { num_crates: 1, from_stack: 2, to_stack: 1 };
+        let second_order = MovementOrder { num_crates: 3, from_stack: 1, to_stack: 3};
+        let third_order = MovementOrder { num_crates: 2, from_stack: 2, to_stack: 1};
+        let forth_order = MovementOrder { num_crates: 1, from_stack: 1, to_stack: 2};
+
+        assert_eq!(Five::find_head(&stacks), "NDP");
+
+        Five::process_9001(&mut stacks, &first_order);
+        assert_eq!(Five::find_head(&stacks), "DCP");
+        Five::process_9001(&mut stacks, &second_order);
+        assert_eq!(Five::find_head(&stacks), " CD");
+        Five::process_9001(&mut stacks, &third_order);
+        assert_eq!(Five::find_head(&stacks), "C D");
+        Five::process_9001(&mut stacks, &forth_order);
+
+        assert_eq!(Five::find_head(&stacks), "MCD");
     }
 }
